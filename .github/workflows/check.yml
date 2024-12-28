@@ -1,0 +1,40 @@
+name: Check JSON Tag and Notify Discord
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Run the job every hour (adjust as needed)
+  workflow_dispatch:
+
+jobs:
+  check_tag:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Fetch JSON Response
+      run: |
+        curl -s "https://product-details.mozilla.org/1.0/firefox_versions.json" > response.json
+
+    - name: Read JSON Tag
+      id: json
+      run: |
+        VALUE=$(jq -r '.LATEST_FIREFOX_RELEASED_DEVEL_VERSION' response.json)
+        echo "::set-output name=value::$VALUE"
+
+    - name: Compare Tag
+      id: compare
+      run: |
+        if [ "${{ steps.json.outputs.value }}" != "134.0b10" ]; then
+          echo "Tag is different"
+          echo "::set-output name=different::true"
+        else
+          echo "Tag is the same"
+          echo "::set-output name=different::false"
+        fi
+
+    - name: Send Discord Webhook
+      if: steps.compare.outputs.different == 'true'
+      run: |
+        curl -H "Content-Type: application/json" -X POST -d '{"content":"The LATEST_FIREFOX_RELEASED_DEVEL_VERSION has changed."}' ${{ secrets.DISCORD_WEBHOOK_URL }}
