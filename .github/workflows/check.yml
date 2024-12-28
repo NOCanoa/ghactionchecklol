@@ -26,7 +26,7 @@ jobs:
     - name: Compare Tag
       id: compare
       run: |
-        if [ "${{ env.VALUE }}" != "134.0b10" ]; then
+        if [ "${{ env.VALUE }}" != "134.0b11" ]; then
           echo "different=true" >> $GITHUB_ENV
         else
           echo "different=false" >> $GITHUB_ENV
@@ -35,4 +35,4 @@ jobs:
     - name: Send Discord Webhook
       if: env.different == 'true'
       run: |
-        curl -H "Content-Type: application/json" -X POST -d '{"content":"The LATEST_FIREFOX_RELEASED_DEVEL_VERSION has changed."}' ${{ secrets.DISCORD_WEBHOOK_URL }}
+        curl -H "Content-Type: application/json" -X POST -d '{"content":"The LATEST_FIREFOX_RELEASED_DEVEL_VERSION has changed to: ${{ env.VALUE }}"}' ${{ secrets.DISCORD_WEBHOOK_URL }}
